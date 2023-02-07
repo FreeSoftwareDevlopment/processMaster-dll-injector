@@ -15,25 +15,8 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="needle.cpp">
+    <ClCompile Include="attachToMe.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
-    <ClCompile Include="mtx.cpp">
-      <Filter>Quelldateien</Filter>
-    </ClCompile>
-    <ClCompile Include="detoursInternal.cpp">
-      <Filter>Quelldateien</Filter>
-    </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="mtx.hxx">
-      <Filter>Headerdateien</Filter>
-    </ClInclude>
-    <ClInclude Include="detoursInternal.h">
-      <Filter>Headerdateien</Filter>
-    </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="vcpkg.json" />
   </ItemGroup>
 </Project>

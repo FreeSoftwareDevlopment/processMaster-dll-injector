@@ -1,6 +1,9 @@
 ﻿#include <Windows.h>
 #include "mtx.hxx"
 #include <filesystem>
+#include <detours/detours.h>
+#include "detoursInternal.h"
+#include <string>
 
 DWORD WINAPI mthread(LPVOID p) {
 	wchar_t fname[MAX_PATH]{ 0 };
@@ -27,18 +30,32 @@ DWORD WINAPI mthread(LPVOID p) {
 	return 0;
 }
 
-BOOL WINAPI DllMain(
-	HINSTANCE hinstDLL,  // handle to DLL module
-	DWORD fdwReason,     // reason for calling function
-	LPVOID lpvReserved)  // reserved
+static int(WINAPI* TrueMsgA)(HWND hWnd, LPCSTR lpText, LPCSTR lpCaption, UINT uType) = MessageBoxA;
+
+int WINAPI FakeMsgA(HWND hWnd, LPCSTR lpText, LPCSTR lpCaption, UINT uType)
 {
+	std::string capt = "Detoured ";
+	capt += lpCaption;
+	return TrueMsgA(hWnd, lpText, capt.c_str(), uType | MB_TOPMOST);
+}
+
+BOOL WINAPI DllMain(HINSTANCE hinst, DWORD dwReason, LPVOID reserved)  // reserved
+{
+	(void)hinst;
+	(void)reserved;
+
+	if (DetourIsHelperProcess()) {
+		return TRUE;
+	}
+
 	// Perform actions based on the reason for calling.
-	switch (fdwReason)
+	switch (dwReason)
 	{
 	case DLL_PROCESS_ATTACH:
 		// Initialize once for each new process.
 		// Return FALSE to fail DLL load.
-		CreateThread(NULL, NULL, mthread, hinstDLL, NULL, NULL);
+		det::loadDetours(&(PVOID&)TrueMsgA, FakeMsgA);
+		CreateThread(NULL, NULL, mthread, hinst, NULL, NULL);
 		break;
 
 	case DLL_THREAD_ATTACH:
@@ -50,8 +67,8 @@ BOOL WINAPI DllMain(
 		break;
 
 	case DLL_PROCESS_DETACH:
-
-		if (lpvReserved != nullptr)
+		det::disMountDe(&(PVOID&)TrueMsgA, FakeMsgA);
+		if (reserved != nullptr)
 		{
 			break; // do not do cleanup if process termination scenario
 		}
